@@ -1,0 +1,47 @@
+---
+import Base from '../../layouts/Base.astro';
+import { DossierView } from '../../components/DossierView';
+import { EditPanel } from '../../components/EditPanel';
+import { ReviewsPanel } from '../../components/ReviewsPanel';
+import { MentionsPanel } from '../../components/MentionsPanel';
+import { ManagePanel } from '../../components/ManagePanel';
+import { getCompanyDossier } from '../../lib/db';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+const { DB } = Astro.locals.runtime.env;
+const company = id ? await getCompanyDossier(DB, id) : null;
+---
+<Base title={company ? company.name || company.domain : 'Not found'}>
+  {company ? (
+    <div class="space-y-8">
+      <DossierView company={company} />
+      <EditPanel
+        client:load
+        companyId={company.id}
+        initial={{
+          name: company.name ?? '',
+          tagline: company.tagline ?? '',
+          headline: company.headline ?? '',
+          subheadline: company.subheadline ?? '',
+          category: company.category ?? '',
+          icp: company.icp ?? '',
+          value_proposition: company.value_proposition ?? '',
+          about_content: company.about_content ?? '',
+        }}
+      />
+      <ReviewsPanel
+        client:load
+        companyId={company.id}
+        initialLikes={company.product_likes ?? ''}
+        initialDislikes={company.product_dislikes ?? ''}
+      />
+      <MentionsPanel client:load companyId={company.id} />
+      <ManagePanel client:load companyId={company.id} />
+    </div>
+  ) : (
+    <p class="text-neutral-400">No company found with that id.</p>
+  )}
+  <p class="mt-6"><a href="/" class="text-sm text-neutral-400 hover:underline">&larr; Back to research</a></p>
+</Base>
